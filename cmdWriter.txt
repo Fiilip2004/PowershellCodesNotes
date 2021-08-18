@@ -1,0 +1,15 @@
+add-type -AssemblyName Microsoft.VisualBasic
+#Load Windows Forms Assembly
+add-type -AssemblyName System.Windows.Forms
+
+#Get all proccess IDs for command prompts
+$procs = Get-Process | Where-Object {$_.Name -contains "cmd"}
+#Counter variable
+$i = 0
+foreach ($proc in $procs)
+{
+    #Bring the focus to the cmd window
+    [Microsoft.VisualBasic.Interaction]::AppActivate($proc.ID)
+    #Send the command to it in order to pipe it's command history to a txt file
+    [System.Windows.Forms.SendKeys]::SendWait("doskey /history > path\$i.txt {Enter}")
+}

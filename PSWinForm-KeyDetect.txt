@@ -1,0 +1,152 @@
+Add-Type -TypeDefinition @"
+using System;
+using System.ComponentModel;
+using System.Drawing;
+using System.Windows.Forms;
+using System.Timers;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+
+namespace Test
+{
+    public class Form1 : Form
+    {
+        public Button button1;
+        System.Timers.Timer t;
+        public Label label5;
+        public Label leftText;
+        public Label rightText;
+        public int mouseCountLeft;
+        public int mouseCounRight;
+        public int keyCount;
+        public bool leftPress;
+        public bool rightPress;
+        public List<int> keyList = new List<int>();
+        public String msg;
+        [DllImport("User32.dll")]
+        public static extern short GetAsyncKeyState(System.Windows.Forms.Keys vKey);
+        [DllImport("User32.dll")]
+        public static extern short GetAsyncKeyState(System.Int32 vKey);
+        public Form1()
+        {
+            button1 = new Button();
+            label5 = new Label();
+            leftText = new Label();
+            rightText = new Label();
+            label5.AutoSize = true;
+            label5.Location = new Point(396, 118);
+            label5.Name = "label5";
+            label5.Size = new Size(50, 20);
+            label5.TabIndex = 3;
+            label5.Text = "label1";
+            leftText.AutoSize = true;
+            leftText.Location = new Point(383, 270);
+            leftText.Name = "leftText";
+            leftText.Size = new Size(50, 20);
+            leftText.TabIndex = 4;
+            leftText.Text = "label1";
+            rightText.AutoSize = true;
+            rightText.Location = new Point(529, 270);
+            rightText.Name = "rightText";
+            rightText.Size = new Size(50, 20);
+            rightText.TabIndex = 5;
+            rightText.Text = "label2";
+            this.AutoScaleDimensions = new SizeF(8F, 20F);
+            this.ClientSize = new Size(800, 450);
+            this.Controls.Add(rightText);
+            this.Controls.Add(leftText);
+            this.Controls.Add(label5);
+            this.Name = "Form1";
+            this.Text = "Form1";
+            this.FormClosing += new FormClosingEventHandler(Form1_FormClosing);
+            this.Load += new EventHandler(Form1_Load);
+            this.Click += new EventHandler(Form1_Click);
+            this.ResumeLayout(false);
+            this.PerformLayout();
+            button1 = new Button();
+            button1.Size = new Size(40, 40);
+            button1.Location = new Point(30, 30);
+            button1.Text = "Click me";
+            this.Controls.Add(button1);
+            button1.Click += new EventHandler(button1_Click);
+            leftPress=new bool();
+            rightPress = false;
+            this.Load += new System.EventHandler(this.Form1_Load);
+        }
+    public void Form1_Load(object sender, EventArgs e)
+        {
+            t = new System.Timers.Timer();
+            t.Interval = 10;
+            t.Elapsed += OnTimeEvent;
+            t.Start();
+        }
+        public void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            t.Stop();
+            Application.DoEvents();
+        }
+        public void button1_Click(object sender, EventArgs e)
+        {
+            leftPress = true;
+            mouseCountLeft++;
+            leftPress = false;
+            rightPress = true;
+            mouseCounRight++;
+            rightPress = false;
+            keyCount++;
+            MessageBox.Show("Hello World");
+        }
+     public void Form1_Click(object sender, EventArgs e)
+        {
+        Console.WriteLine("Hello world");
+        }
+   public void OnTimeEvent(object sender, ElapsedEventArgs e)
+        {
+            Invoke(new Action(() =>
+            {
+                foreach (System.Int32 i in Enum.GetValues(typeof(Keys))) //Iterate through each key to know whether it was pressed or not
+                {
+                    if (GetAsyncKeyState(i) == -32767)
+                    {
+                        msg = Enum.GetName(typeof(Keys), i).ToString();
+                        //leftText.Text = msg;
+                        //RButton|LButton
+                        if (msg!="RButton" && msg != "LButton")
+                        {
+                            if (!keyList.Contains(i)) {
+                                keyCount++;
+                                keyList.Add(i);
+                            }
+                        }
+                        else if (msg=="RButton" && !keyList.Contains(i)) {
+                            keyList.Add(i);
+                            mouseCounRight++;
+                        }else if (msg == "LButton" && !keyList.Contains(i))
+                        {
+                            keyList.Add(i);
+                            mouseCountLeft++;
+                        }
+                    }
+                    else if(GetAsyncKeyState(i) == 0 && keyList.Contains(i))
+                    {
+                        keyList.Remove(i);
+                    }
+                }
+                leftText.Text = "LeftMouse: " + mouseCountLeft.ToString();
+                rightText.Text = "RightMouse: " + mouseCounRight.ToString();
+                label5.Text = "Any key click" + keyCount.ToString();
+            }));
+        }
+        [STAThread]
+        public static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.Run(new Form1());
+        }
+    }
+}
+"@ -ReferencedAssemblies System.Windows.Forms, System.Drawing
+
+
+//RUN
+iex "[Test.Form1]::Main()"
